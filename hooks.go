@@ -3,8 +3,8 @@ package hooks
 import "sync"
 
 // HookFunc is the type of a hook callback function, receiving a slice of any value as arguments
-// and returning one argument and an error.
-type HookFunc func(a []interface{}) (interface{}, error)
+// and returning one argument as interface{}.
+type HookFunc func(a []interface{}) interface{}
 
 var lock sync.RWMutex
 var cb map[int]map[int]HookFunc
