@@ -9,8 +9,8 @@ type HookFunc func(a []interface{}) (interface{}, error)
 var lock sync.RWMutex
 var cb map[int]HookFunc
 
-// Add adds the given hook for the ID. If a function already exists under that ID, it is overwritten.
-func Add(id int, f HookFunc) {
+// Set stores the given hook for the ID. If a function already exists under that ID, it is overwritten.
+func Set(id int, f HookFunc) {
 	lock.Lock()
 	defer lock.Unlock()
 	cb[id] = f
@@ -35,6 +35,8 @@ func Remove(id int) {
 // Active returns true if the given hook is set, false otherwise. Using this first before using Exec
 // may be more efficient due to the arguments provided to Exec.
 func Active(id int) bool {
+	lock.RLock()
+	defer lock.RUnlock()
 	_, ok := cb[id]
 	return ok
 }

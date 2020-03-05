@@ -13,9 +13,9 @@ Hooks is a package that implements a global repository of callbacks called _hook
 
 The function signature of a hook.
 
-`Add(id int, f HookFunc)`
+`Set(id int, f HookFunc)`
 
-Add the hook with given ID. An existing callback will be overwritten.
+Store the hook with given ID. An existing callback will be overwritten.
 
 `Exec(id int, args ...interface{})`
 
@@ -25,3 +25,6 @@ Execute the hook with given ID and arguments.
 
 Remove the hook with given ID.
 
+`Active(id int) bool`
+
+Returns true if the hook is set, false otherwise. Using this function to check for the hook first may be more efficient than calling Exec directly, because of the arguments that Exec takes.
