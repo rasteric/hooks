@@ -5,11 +5,11 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/rasteric/hooks)](https://goreportcard.com/report/github.com/rasteric/hooks)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-Hooks is a package that implements a global repository of callbacks called _hooks_, which are functions that take an arbitrary number of arguments and return a value and an error. Every hook has a fixed integer number, which must be attributed by the user of the package. Adding a function returns an integer ID for that function that can be used to remove it later. This might seem redundant and makes the package slower, but it is a requirement for the use it is intended for. The package is thread safe.
+Hooks is a package that implements a global repository of callbacks called _hooks_, which are functions that take an array of empty interface values and do not return anything. Every hook has a fixed integer number, which must be attributed by the user of the package. Adding a function returns an integer ID for that function that can be used to remove it later. This might seem redundant and makes the package slower, but it is a requirement for the use it is intended for. The package is thread safe.
 
 ## Usage
 
-`type HookFunc func(a []interface{}) (interface{}, error)`
+`type HookFunc func(a []interface{})`
 
 The function signature of a hook.
 
