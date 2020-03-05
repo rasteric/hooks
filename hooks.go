@@ -2,22 +2,18 @@ package hooks
 
 import "sync"
 
-// HookFunc is the type of a hook callback function, receiving a slice of any value as arguments
-// and returning nothing.
-type HookFunc func(a []interface{})
-
 var lock sync.RWMutex
-var cb map[int]map[int]HookFunc
+var cb map[int]map[int]func(a []interface{})
 var counter int
 
 // Add a function for the given hook. The function is added to the list of functions of the hook.
 // Add returns an ID2 that represents the individual function of the hook.
-func Add(hook int, f HookFunc) int {
+func Add(hook int, f func(a []interface{})) int {
 	lock.Lock()
 	defer lock.Unlock()
 	hooks, ok := cb[hook]
 	if !ok || hooks == nil {
-		hooks = make(map[int]HookFunc)
+		hooks = make(map[int]func(a []interface{}))
 	}
 	counter++
 	hooks[counter] = f
@@ -69,5 +65,5 @@ func Active(hook int) bool {
 func init() {
 	lock.Lock()
 	defer lock.Unlock()
-	cb = make(map[int]map[int]HookFunc)
+	cb = make(map[int]map[int]func(a []interface{}))
 }

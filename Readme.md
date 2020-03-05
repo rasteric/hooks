@@ -9,11 +9,7 @@ Hooks is a package that implements a global repository of callbacks called _hook
 
 ## Usage
 
-`type HookFunc func(a []interface{})`
-
-The function signature of a hook.
-
-`Add(hook int, f HookFunc) int`
+`Add(hook int, f func(a []interface{})) int`
 
 Add a callback for hook and return a numerical ID for the function that was added.
 
