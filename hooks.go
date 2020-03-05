@@ -32,6 +32,13 @@ func Remove(id int) {
 	delete(cb, id)
 }
 
+// Active returns true if the given hook is set, false otherwise. Using this first before using Exec
+// may be more efficient due to the arguments provided to Exec.
+func Active(id int) bool {
+	_, ok := cb[id]
+	return ok
+}
+
 func init() {
 	lock.Lock()
 	defer lock.Unlock()
