@@ -49,6 +49,13 @@ func (h *HookContainer) suspend() {
 	h.suspended = true
 }
 
+// isSuspended returns true if the hook container is suspended, false otherwise.
+func (h *HookContainer) isSuspended() bool {
+	h.mutex.RLock()
+	defer h.mutex.RUnlock()
+	return h.suspended
+}
+
 // unsuspend the hook container so that future calls to exec will call the procedures stored.
 func (h *HookContainer) unsuspend() {
 	h.mutex.Lock()
@@ -126,8 +133,11 @@ func RemoveAll(hook int) {
 func Active(hook int) bool {
 	lock.RLock()
 	defer lock.RUnlock()
-	_, ok := hooks[hook]
-	return ok
+	container, ok := hooks[hook]
+	if !ok || container == nil {
+		return false
+	}
+	return !container.isSuspended()
 }
 
 // WithHookSuspended ensures that within the function provided all calls to the hooks Exec function

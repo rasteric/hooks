@@ -27,7 +27,7 @@ Remove all functions for the hook.
 
 `Active(id int) bool`
 
-Returns true if one or more functions for the hook are set, false otherwise. Using this function to check first may be more efficient than calling Exec directly, because of the arguments that Exec takes.
+Returns true if one or more functions for the hook are set and the hook is not suspended, false otherwise. Using this function to check first may be more efficient than calling Exec directly, because of the arguments that Exec takes.
 
 `WithHookSuspended(hook int, f func())`
 
