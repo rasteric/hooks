@@ -100,8 +100,8 @@ func Exec(hook int, args ...interface{}) {
 
 // Remove the function with ID for the given hook, if it exists.
 func Remove(hook, id int) {
-	lock.Lock()
-	defer lock.Unlock()
+	lock.RLock()
+	defer lock.RUnlock()
 	container, ok := hooks[hook]
 	if !ok || container == nil {
 		return
@@ -128,6 +128,20 @@ func Active(hook int) bool {
 	defer lock.RUnlock()
 	_, ok := hooks[hook]
 	return ok
+}
+
+// WithHookSuspended ensures that within the function provided all calls to the hooks Exec function
+// are suspended.
+func WithHookSuspended(hook int, f func()) {
+	lock.RLock()
+	defer lock.RUnlock()
+	container, ok := hooks[hook]
+	if !ok || container == nil {
+		return
+	}
+	container.suspend()
+	defer container.unsuspend()
+	f()
 }
 
 func init() {
