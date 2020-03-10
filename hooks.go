@@ -1,6 +1,8 @@
 package hooks
 
-import "sync"
+import (
+	"sync"
+)
 
 var lock sync.RWMutex
 var hooks map[int]*HookContainer
@@ -16,8 +18,7 @@ type HookContainer struct {
 func newHookContainer() *HookContainer {
 	m := make(map[int]func(a []interface{}))
 	return &HookContainer{
-		procs:     m,
-		suspended: false,
+		procs: m,
 	}
 }
 
@@ -32,11 +33,11 @@ func (h *HookContainer) add(f func(a []interface{})) int {
 
 // exec executes the hooks for the given container in unspecified order.
 func (h *HookContainer) exec(args ...interface{}) {
-	h.mutex.RLock()
-	defer h.mutex.RUnlock()
-	if h.suspended {
+	if h.isSuspended() {
 		return
 	}
+	h.suspend()
+	defer h.unsuspend()
 	for _, proc := range h.procs {
 		proc(args)
 	}
@@ -118,8 +119,8 @@ func Remove(hook, id int) {
 
 // Remove all functions for the hook.
 func RemoveAll(hook int) {
-	lock.Lock()
-	defer lock.Unlock()
+	lock.RLock()
+	defer lock.RUnlock()
 	container, ok := hooks[hook]
 	if !ok || container == nil {
 		return
@@ -138,20 +139,6 @@ func Active(hook int) bool {
 		return false
 	}
 	return !container.isSuspended()
-}
-
-// WithHookSuspended ensures that within the function provided all calls to the hooks Exec function
-// are suspended.
-func WithHookSuspended(hook int, f func()) {
-	lock.RLock()
-	defer lock.RUnlock()
-	container, ok := hooks[hook]
-	if !ok || container == nil {
-		return
-	}
-	container.suspend()
-	defer container.unsuspend()
-	f()
 }
 
 func init() {
