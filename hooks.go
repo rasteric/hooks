@@ -32,7 +32,7 @@ func (h *HookContainer) add(f func(a []interface{})) int {
 }
 
 // exec executes the hooks for the given container in unspecified order.
-func (h *HookContainer) exec(args ...interface{}) {
+func (h *HookContainer) exec(args []interface{}) {
 	if h.isSuspended() {
 		return
 	}
