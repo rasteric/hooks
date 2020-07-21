@@ -9,6 +9,7 @@ var hooks map[int]*HookContainer
 
 type HookContainer struct {
 	procs     map[int]func(a []interface{})
+	keys      []int
 	suspended bool
 	mutex     sync.RWMutex
 	counter   int
@@ -17,67 +18,75 @@ type HookContainer struct {
 // newHookContainer creates a new hook function container. Normally, this function does not need to be used.
 func newHookContainer() *HookContainer {
 	m := make(map[int]func(a []interface{}))
+	k := make([]int, 0)
 	return &HookContainer{
 		procs: m,
+		keys:  k,
 	}
 }
 
-// add a new hook to the given container, return its internal id.
-func (h *HookContainer) add(f func(a []interface{})) int {
+// lock the container and suspend its exec operations.
+func (h *HookContainer) lock() {
 	h.mutex.Lock()
-	defer h.mutex.Unlock()
-	h.counter++
-	h.procs[h.counter] = f
-	return h.counter
-}
-
-// exec executes the hooks for the given container in unspecified order.
-func (h *HookContainer) exec(args []interface{}) {
-	if h.isSuspended() {
-		return
-	}
-	h.suspend()
-	defer h.unsuspend()
-	for _, proc := range h.procs {
-		proc(args)
-	}
-}
-
-// suspend the hook container, which means that exec does not do anything if it's called.
-func (h *HookContainer) suspend() {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
 	h.suspended = true
 }
 
-// isSuspended returns true if the hook container is suspended, false otherwise.
+// unlock the container and resume its exec operations.
+func (h *HookContainer) unlock() {
+	h.mutex.Unlock()
+	h.suspended = false
+}
+
+// isSuspended returns true if the exec operations are suspended, false otherwise.
 func (h *HookContainer) isSuspended() bool {
 	h.mutex.RLock()
 	defer h.mutex.RUnlock()
 	return h.suspended
 }
 
-// unsuspend the hook container so that future calls to exec will call the procedures stored.
-func (h *HookContainer) unsuspend() {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-	h.suspended = false
+// add a new hook to the given container, return its internal id.
+func (h *HookContainer) add(f func(a []interface{})) int {
+	h.lock()
+	defer h.unlock()
+	h.counter++
+	h.procs[h.counter] = f
+	h.keys = append(h.keys, h.counter)
+	return h.counter
+}
+
+// exec executes the hooks for the given container in FIFO order.
+func (h *HookContainer) exec(args []interface{}) {
+	h.lock()
+	defer h.unlock()
+	for _, k := range h.keys {
+		f, ok := h.procs[k]
+		if ok {
+			f(args)
+		}
+	}
 }
 
 // remove the procedure with id.
 func (h *HookContainer) remove(id int) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
+	h.lock()
+	defer h.unlock()
 	delete(h.procs, id)
+	for i := range h.keys {
+		if h.keys[i] == id {
+			h.keys = append(h.keys[:i], h.keys[i+1:]...)
+			break
+		}
+	}
 }
 
 // remove all hooks in the container.
 func (h *HookContainer) removeAll() {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
+	h.lock()
+	defer h.unlock()
 	for k := range h.procs {
 		delete(h.procs, k)
 	}
+	h.keys = make([]int, 0)
 }
 
 // Add a function for the given hook. The function is added to the list of functions of the hook.
@@ -94,7 +103,7 @@ func Add(hook int, f func(a []interface{})) int {
 }
 
 // Exec executes all functions for the hook with the given args. It does nothing if there is no function
-// for the hook. The functions for a hook are executed in arbitrary order. While functions for a hook
+// for the hook. The functions for a hook are executed in FIFO order. While functions for a hook
 // are executed, the hook itself is not called.
 func Exec(hook int, args ...interface{}) {
 	lock.RLock()
