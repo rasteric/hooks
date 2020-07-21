@@ -54,12 +54,12 @@ func (h *HookContainer) add(f func(a []interface{})) int {
 	return h.counter
 }
 
-// exec executes the hooks for the given container in FIFO order.
+// exec executes the hooks for the given container in LIFO order.
 func (h *HookContainer) exec(args []interface{}) {
 	h.lock()
 	defer h.unlock()
-	for _, k := range h.keys {
-		f, ok := h.procs[k]
+	for i := len(h.keys) - 1; i >= 0; i-- {
+		f, ok := h.procs[h.keys[i]]
 		if ok {
 			f(args)
 		}
@@ -103,7 +103,7 @@ func Add(hook int, f func(a []interface{})) int {
 }
 
 // Exec executes all functions for the hook with the given args. It does nothing if there is no function
-// for the hook. The functions for a hook are executed in FIFO order. While functions for a hook
+// for the hook. The functions for a hook are executed in LIFO order. While functions for a hook
 // are executed, the hook itself is not called.
 func Exec(hook int, args ...interface{}) {
 	lock.RLock()

@@ -15,7 +15,7 @@ Add a callback for hook and return a numerical ID for the function that was adde
 
 `Exec(hook int, args ...interface{})`
 
-Execute all functions for the hook if there are any.
+Execute all functions for the hook if there are any, in the order LIFO - last added hook function is executed first, then the second last, and so on.
 
 `Remove(hook, id int)`
 
